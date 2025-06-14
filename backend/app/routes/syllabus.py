@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Response
 from sqlalchemy.orm import Session
 from typing import List
 import json
@@ -8,6 +8,10 @@ from app.db.session import SessionLocal
 from app.db.models.syllabus import Syllabus
 from app.services.gemini import extract_syllabus_info
 from app.services.extractor import extract_text
+from pydantic import BaseModel
+
+class ColorUpdate(BaseModel):
+    accent_color: str
 
 router = APIRouter()
 
@@ -117,10 +121,11 @@ def list_syllabi(db: Session = Depends(get_db)):
                 "first_class": syllabus.first_class,
                 "last_class": syllabus.last_class,
                 "midterms": json.loads(syllabus.midterm_dates) if syllabus.midterm_dates else [],
-                "final_exam": syllabus.final_exam_date,
+                "final_exam": syllabus.final_exam_date
             },
             "grading_policy": json.loads(syllabus.grading_policy) if syllabus.grading_policy else {},
-            "schedule_summary": syllabus.schedule_summary
+            "schedule_summary": syllabus.schedule_summary,
+            "accent_color": syllabus.accent_color
         }
         for syllabus in syllabi
     ]
@@ -145,3 +150,13 @@ def delete_syllabus(syllabus_id: int, db: Session = Depends(get_db)):
     db.commit()
     
     return {"message": "Syllabus deleted successfully"}
+
+@router.patch("/syllabi/{syllabus_id}/color")
+def update_syllabus_color(syllabus_id: int, color_update: ColorUpdate, db: Session = Depends(get_db)):
+    syllabus = db.query(Syllabus).filter(Syllabus.id == syllabus_id).first()
+    if not syllabus:
+        raise HTTPException(status_code=404, detail="Syllabus not found")
+    
+    syllabus.accent_color = color_update.accent_color
+    db.commit()
+    return {"status": "success"}

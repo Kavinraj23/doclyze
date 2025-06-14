@@ -1,4 +1,5 @@
 import api from '../../services/api';
+import type { AccentColor } from '../../components/ClassCard';
 
 export interface Syllabus {
   id: number;
@@ -27,6 +28,7 @@ export interface Syllabus {
   };
   grading_policy: Record<string, string>;
   schedule_summary: string;
+  accent_color?: AccentColor;
 }
 
 export const fetchSyllabi = async (): Promise<Syllabus[]> => {
@@ -36,4 +38,8 @@ export const fetchSyllabi = async (): Promise<Syllabus[]> => {
 
 export const deleteSyllabus = async (id: number): Promise<void> => {
   await api.delete(`/syllabi/${id}`);
+};
+
+export const updateSyllabusColor = async (id: number, color: AccentColor): Promise<void> => {
+  await api.patch(`/syllabi/${id}/color`, { accent_color: color });
 };

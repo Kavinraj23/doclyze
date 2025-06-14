@@ -18,6 +18,7 @@ class Syllabus(Base):
     semester = Column(String, nullable=True)
     year = Column(String, nullable=True)
     description = Column(Text, nullable=True)
+    accent_color = Column(String, nullable=True)  # Store the accent color
     
     # Meeting information
     meeting_days = Column(String, nullable=True)
