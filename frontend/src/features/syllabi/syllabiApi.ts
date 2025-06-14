@@ -33,3 +33,7 @@ export const fetchSyllabi = async (): Promise<Syllabus[]> => {
   const response = await api.get('/syllabi');
   return response.data;
 };
+
+export const deleteSyllabus = async (id: number): Promise<void> => {
+  await api.delete(`/syllabi/${id}`);
+};

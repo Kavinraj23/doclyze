@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import ClassCard from '../components/ClassCard';
-import Modal from '../components/Modal';
 import UploadModal from '../components/UploadModal';
-import { fetchSyllabi } from '../features/syllabi/syllabiApi';
+import { fetchSyllabi, deleteSyllabus } from '../features/syllabi/syllabiApi';
 import type { Syllabus } from '../features/syllabi/syllabiApi';
+import SyllabusModal from '../components/SyllabusModal';
 
 const DashboardPage: React.FC = () => {
   const [selectedClass, setSelectedClass] = useState<number | null>(null);
@@ -17,9 +17,9 @@ const DashboardPage: React.FC = () => {
       setLoading(true);
       const data = await fetchSyllabi();
       setSyllabi(data);
-    } catch (err) {
+    } catch (error) {
       setError('Failed to load syllabi. Please try again later.');
-      console.error('Error loading syllabi:', err);
+      console.error('Error loading syllabi:', error);
     } finally {
       setLoading(false);
     }
@@ -29,8 +29,21 @@ const DashboardPage: React.FC = () => {
     loadSyllabi();
   }, []);
 
-  const handleUploadSuccess = () => {
-    loadSyllabi(); // Reload syllabi after successful upload
+  const handleDeleteSyllabus = async (id: number) => {
+    try {
+      setError(null); // Clear any existing errors
+      await deleteSyllabus(id);
+      await loadSyllabi(); // Refresh the list
+    } catch (error) {
+      const err = error as { response?: { status: number } };
+      console.error('Failed to delete syllabus:', err);
+      const errorMessage = err.response?.status === 404
+        ? 'Syllabus not found. It may have been already deleted.'
+        : 'Failed to delete syllabus. Please try again.';
+      setError(errorMessage);
+      // Clear error after 5 seconds
+      setTimeout(() => setError(null), 5000);
+    }
   };
 
   const selectedSyllabus = syllabi.find(s => s.id === selectedClass);
@@ -62,8 +75,8 @@ const DashboardPage: React.FC = () => {
                 onClick={() => setIsUploadModalOpen(true)}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition flex items-center space-x-2"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                <svg className="w-5 h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                  <path d="M12 4v16m8-8H4"></path>
                 </svg>
                 <span>Upload Syllabus</span>
               </button>
@@ -82,7 +95,10 @@ const DashboardPage: React.FC = () => {
               <div className="bg-red-50 border border-red-200 rounded-md p-4 text-center">
                 <p className="text-red-600">{error}</p>
                 <button 
-                  onClick={() => window.location.reload()} 
+                  onClick={() => {
+                    setError(null);
+                    loadSyllabi();
+                  }} 
                   className="mt-2 text-red-600 hover:text-red-700 underline"
                 >
                   Try Again
@@ -103,6 +119,7 @@ const DashboardPage: React.FC = () => {
                       key={syllabus.id}
                       syllabus={syllabus}
                       onClick={() => setSelectedClass(syllabus.id)}
+                      onDelete={handleDeleteSyllabus}
                     />
                   ))
                 )}
@@ -112,20 +129,19 @@ const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Syllabus Modal */}
+      {/* Modals */}
       {selectedSyllabus && (
-        <Modal
+        <SyllabusModal
           isOpen={selectedClass !== null}
           onClose={() => setSelectedClass(null)}
           syllabus={selectedSyllabus}
         />
       )}
 
-      {/* Upload Modal */}
       <UploadModal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
-        onUploadSuccess={handleUploadSuccess}
+        onUploadSuccess={loadSyllabi}
       />
     </div>
   );

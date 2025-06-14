@@ -55,6 +55,9 @@ Remember to:
 4. Use empty arrays ([]) for missing lists
 5. Use empty objects ({{}}) for missing nested objects
 6. Do not include any explanatory text or markdown formatting
+7. Take the year as the current year if not specified
+8. Ensure the year is reflected in important dates (if year is 2025, then "first_class" should be in 2025)
+9. If the semester is not specified, reasonably assume whether it's fall, spring, or summer based on the context
 """
 
     # Use Gemini 1.5 Flash

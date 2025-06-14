@@ -124,3 +124,24 @@ def list_syllabi(db: Session = Depends(get_db)):
         }
         for syllabus in syllabi
     ]
+
+@router.delete("/syllabi/{syllabus_id}")
+def delete_syllabus(syllabus_id: int, db: Session = Depends(get_db)):
+    syllabus = db.query(Syllabus).filter(Syllabus.id == syllabus_id).first()
+    if not syllabus:
+        raise HTTPException(status_code=404, detail="Syllabus not found")
+    
+    # Delete the associated file if it exists
+    file_path = os.path.join(UPLOAD_DIR, syllabus.filename)
+    if os.path.exists(file_path):
+        try:
+            os.remove(file_path)
+        except OSError:
+            # Log the error but continue with DB deletion
+            print(f"Error deleting file: {file_path}")
+    
+    # Delete from database
+    db.delete(syllabus)
+    db.commit()
+    
+    return {"message": "Syllabus deleted successfully"}
